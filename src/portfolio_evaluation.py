@@ -11,8 +11,7 @@ def main():
     key = s3_read(bucket='trader-con', key='secrets/alpha_vantage_secrets.txt')
 
     # read in portfolio (TO DO: switch to s3 location
-    with open('Data/portfolio.json') as json_file:
-        portfolio = json.load(json_file)
+    portfolio = get_portfolio()
 
     # get cash value
     cash = portfolio['cash']

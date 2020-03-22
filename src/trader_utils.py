@@ -4,6 +4,7 @@ import boto3
 import json 
 import time
 import datetime
+from io import StringIO
 from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.techindicators import TechIndicators
 
@@ -15,6 +16,22 @@ def s3_read(bucket, key):
     body = s3_object['Body']
     return body.read().decode('utf-8')
 
+def df_to_s3(df, bucket, key):
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer)
+    session = boto3.Session(profile_name='trader')
+    s3_resource = session.resource('s3')
+    s3_resource.Object(bucket, key).put(Body=csv_buffer.getvalue())
+    return None
+
+def df_from_s3(bucket, key):
+    session = boto3.Session(profile_name='trader')
+    client = session.client('s3')
+    csv_obj = client.get_object(Bucket=bucket, Key=key)
+    body = csv_obj['Body']
+    csv_string = body.read().decode('utf-8')
+    return pd.read_csv(StringIO(csv_string))
+
 
 def json_to_s3(bucket:str, key:str, data:dict):
     session = boto3.Session(profile_name='trader')
@@ -24,6 +41,15 @@ def json_to_s3(bucket:str, key:str, data:dict):
     s3object.put(
         Body=(bytes(json.dumps(data).encode('UTF-8')))
     )
+
+
+def json_from_s3(bucket, key):
+    session = boto3.Session(profile_name='trader')
+    s3 = session.resource('s3')
+    content_object = s3.Object(bucket, key)
+    file_content = content_object.get()['Body'].read().decode('utf-8')
+    json_content = json.loads(file_content)
+    return json_content
 
 
 def parse_ts(ts:dict):
@@ -49,9 +75,8 @@ def get_local_minmax(rsi, min_max='min'):
 
 
 def get_portfolio():
-    # TO DO: switch to s3
-    with open('Data/portfolio.json') as json_file:
-        portfolio = json.load(json_file)
+    portfolio = json_from_s3(bucket='trader-con', key='portfolios/portfolio.json')
+
     return portfolio
 
 
@@ -129,12 +154,9 @@ def trade(t:str, ticker:str, shares:int, price:float, portfolio:dict):
     print(portfolio)
 
     # write updated portfolio
-    # TO DO: swithc to s3
-    with open('Data/portfolio.json', 'w') as d:
-        json.dump(portfolio, d)
+    json_to_s3(bucket='trader-con', key='portfolios/portfolio.json', data=portfolio)
     
     # Write trade details
-    # TO DO: swithc to s3
     timestr = time.strftime("%Y%m%d-%H%M%S")
     json_to_s3(bucket='trader-con', key=f'trades/trade_{timestr}.json', data=trade_details)
     with open(f'Data/trades/trade_{timestr}.json', 'w') as d:

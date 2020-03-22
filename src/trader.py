@@ -48,8 +48,8 @@ def main(k, ticker):
             trade(t='buy',ticker=ticker, shares=shares, price=price, portfolio=portfolio)
 
     ########################## SELL #######################
-    elif df.iloc[-3]['sell_point'] == 1:
-    #elif 1==1:
+    #elif df.iloc[-3]['sell_point'] == 1:
+    elif 1==1:
         print('Making Sale!')
         # time to sell
 
