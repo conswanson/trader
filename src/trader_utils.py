@@ -9,7 +9,6 @@ from alpha_vantage.techindicators import TechIndicators
 
 
 def s3_read(bucket, key):
-
     session = boto3.Session(profile_name='trader')
     s3 = session.client('s3')
     s3_object = s3.get_object(Bucket=bucket, Key=key)
@@ -47,6 +46,13 @@ def get_local_minmax(rsi, min_max='min'):
             ind = 0
         is_loc.append(ind)
     return is_loc
+
+
+def get_portfolio():
+    # TO DO: switch to s3
+    with open('Data/portfolio.json') as json_file:
+        portfolio = json.load(json_file)
+    return portfolio
 
 
 def get_stock_price(key, ticker):
@@ -135,8 +141,5 @@ def trade(t:str, ticker:str, shares:int, price:float, portfolio:dict):
         json.dump(trade_details, d)
     
     return None
-
-
-
 
 

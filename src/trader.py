@@ -9,10 +9,11 @@ from alpha_vantage.timeseries import TimeSeries
 from alpha_vantage.techindicators import TechIndicators
 from trader_utils import *
 
+
 def get_input_params():
     tickers = sys.argv[1]
     if tickers == 'all':
-        tickers = ['V', 'AAPL', 'BA', 'MSFT', 'FB', 'NFLX', 'EA']
+        tickers = ['V', 'AAPL', 'BA', 'MSFT', 'FB', 'NFLX', 'EA', 'UBER','VZ', 'C', 'JPM']
     else:
         tickers = tickers.split(',')
     return tickers
@@ -22,7 +23,6 @@ def main(k, ticker):
     stock = get_stock_price(key=k, ticker=ticker)
     rsi = get_rsi(key=k, ticker=ticker)
 
-
     # merge together
     df = pd.merge(stock, rsi, how='inner',on='ts').sort_values('ts').reset_index().drop(columns='index')
     df.tail(3)
@@ -31,10 +31,9 @@ def main(k, ticker):
     if df.iloc[-3]['buy_point'] == 1:
     #if 1==1:
         print('Making Purchase!')
-        # time to buy
+
         # opening portfolio
-        with open('Data/portfolio.json') as json_file:
-            portfolio = json.load(json_file)
+        portfolio = get_portfolio()
 
         print('Current Portfolio: ')
         print(portfolio)
@@ -55,12 +54,10 @@ def main(k, ticker):
         # time to sell
 
         # opening portfolio
-        with open('Data/portfolio.json') as json_file:
-            portfolio = json.load(json_file)
+        portfolio = get_portfolio()
 
         print('Current Portfolio: ')
         print(portfolio)
-        cash = portfolio['cash']
         price = df.iloc[-1]['closing_price']
 
         if ticker in portfolio['stock'].keys():
@@ -82,8 +79,7 @@ if __name__ == '__main__':
     for ticker in tickers:
         print(f'Checking market for {ticker}')
         main(k=k, ticker=ticker)
-        time.sleep(30)
+        time.sleep(25)
 
     print('Complete')
-
 
